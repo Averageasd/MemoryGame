@@ -2,9 +2,9 @@ import './App.css'
 import {useEffect, useState} from "react";
 import {fetchImages} from "./data/dataFetcher.js";
 import {v4 as uuidv4} from 'uuid';
-import {Card} from "./components/Card.jsx";
 import {ScoreBoard} from "./components/ScoreBoard.jsx";
 import {topics} from "./data/Topics.js";
+import {CardContainer} from "./components/CardContainer.jsx";
 
 function App() {
 
@@ -107,20 +107,10 @@ function App() {
                 score={score}
                 maxScore={maxScore}>
             </ScoreBoard>
-            <ul>
-                {imgs.map(img => {
-                    return (
-                        <Card
-                            id={img.id}
-                            link={img.link}
-                            cardClickHandler={() => {
-                                cardClickHandler(img.id)
-                            }}
-                        >
-                        </Card>
-                    )
-                })}
-            </ul>
+            <CardContainer
+                imgs={imgs}
+                cardClickHandler={cardClickHandler}>
+            </CardContainer>
         </>
     )
 }
