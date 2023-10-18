@@ -3,6 +3,8 @@ import {useEffect, useState} from "react";
 import {fetchImages} from "./data/dataFetcher.js";
 import {v4 as uuidv4} from 'uuid';
 import {Card} from "./components/Card.jsx";
+import {ScoreBoard} from "./components/ScoreBoard.jsx";
+import {topics} from "./data/Topics.js";
 
 function App() {
 
@@ -11,6 +13,8 @@ function App() {
     const [maxScore, setMaxScore] = useState(0);
     const [updateMax, setUpdateMax] = useState(false);
     const [clickCounter, setClickCounter] = useState(0);
+    const [topic, setTopic] = useState(topics[0]);
+    const [fetch, setFetch] = useState(true);
 
     function cardClickHandler(id) {
         if (clickCounter === imgs.length) {
@@ -34,6 +38,11 @@ function App() {
         setScore(score + 1);
         setUpdateMax(true);
         randomizeImages(updatedImgs);
+    }
+
+    function generateTopic() {
+        let randIdx = Math.floor(Math.random() * topics.length);
+        setTopic(topics[randIdx]);
     }
 
     function randomizeImages(imgs) {
@@ -62,23 +71,25 @@ function App() {
         setClickCounter(0);
         setScore(0);
         setUpdateMax(true);
-        const restImgs = (imgs.map(img => {
-            return {...img, isClicked: false};
-        }))
-        randomizeImages(restImgs);
+        setFetch(true);
+        generateTopic();
     }
 
     useEffect(() => {
-        fetchImages("https://api.pexels.com/v1/search", "animals")
-            .then(imgRes => {
-                initializeImages(imgRes)
-            })
+        if (fetch) {
+            fetchImages("https://api.pexels.com/v1/search", topic)
+                .then(imgRes => {
+                    initializeImages(imgRes)
+                })
+            setFetch(false);
+        }
 
         return () => {
             setImgs([]);
+            setFetch(false);
         }
 
-    }, []);
+    }, [topic, fetch]);
 
     useEffect(() => {
         if (updateMax) {
@@ -93,12 +104,10 @@ function App() {
 
     return (
         <>
-            <h2>
-                Score : {score}
-            </h2>
-            <h2>
-                Max Score: {maxScore}
-            </h2>
+            <ScoreBoard
+                score={score}
+                maxScore={maxScore}>
+            </ScoreBoard>
             <ul>
                 {imgs.map(img => {
                     return (
