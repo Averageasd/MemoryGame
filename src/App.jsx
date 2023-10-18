@@ -11,7 +11,6 @@ function App() {
     const [imgs, setImgs] = useState([]);
     const [score, setScore] = useState(0);
     const [maxScore, setMaxScore] = useState(0);
-    const [updateMax, setUpdateMax] = useState(false);
     const [clickCounter, setClickCounter] = useState(0);
     const [topic, setTopic] = useState(topics[0]);
     const [fetch, setFetch] = useState(true);
@@ -22,8 +21,7 @@ function App() {
             return;
         }
         setClickCounter(clickCounter + 1);
-        randomizeImages(imgs);
-        const clickedImg = {...imgs.find(img => img.id === id)};
+        const clickedImg = imgs.find(img => img.id === id);
         if (clickedImg.isClicked) {
             reset();
             return;
@@ -35,14 +33,24 @@ function App() {
             }
             return img;
         })
-        setScore(score + 1);
-        setUpdateMax(true);
+        incrementScore();
         randomizeImages(updatedImgs);
     }
 
     function generateTopic() {
         let randIdx = Math.floor(Math.random() * topics.length);
         setTopic(topics[randIdx]);
+    }
+
+    function updateMax() {
+        const max = Math.max(score, maxScore);
+        setMaxScore(max);
+    }
+
+    function incrementScore() {
+        let updatedScore = score + 1;
+        setScore(updatedScore);
+        setMaxScore(Math.max(updatedScore, maxScore));
     }
 
     function randomizeImages(imgs) {
@@ -70,7 +78,7 @@ function App() {
     function reset() {
         setClickCounter(0);
         setScore(0);
-        setUpdateMax(true);
+        updateMax();
         setFetch(true);
         generateTopic();
     }
@@ -87,20 +95,11 @@ function App() {
         return () => {
             setImgs([]);
             setFetch(false);
+            setClickCounter(0);
+            setScore(0);
         }
 
     }, [topic, fetch]);
-
-    useEffect(() => {
-        if (updateMax) {
-            setMaxScore(Math.max(score, maxScore));
-            setUpdateMax(false);
-        }
-
-        return () => {
-            setUpdateMax(false);
-        }
-    }, [updateMax])
 
     return (
         <>
@@ -114,7 +113,9 @@ function App() {
                         <Card
                             id={img.id}
                             link={img.link}
-                            cardClickHandler={() => cardClickHandler(img.id)}
+                            cardClickHandler={() => {
+                                cardClickHandler(img.id)
+                            }}
                         >
                         </Card>
                     )
