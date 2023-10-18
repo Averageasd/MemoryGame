@@ -2,19 +2,40 @@ import './App.css'
 import {useEffect, useState} from "react";
 import {fetchImages} from "./data/dataFetcher.js";
 import {v4 as uuidv4} from 'uuid';
+import {Card} from "./components/Card.jsx";
 
 function App() {
 
-    // set imgs state to display.
     const [imgs, setImgs] = useState([]);
+    const [score, setScore] = useState(0);
+    const [maxScore, setMaxScore] = useState(0);
+    const [updateMax, setUpdateMax] = useState(false);
+    const [clickCounter, setClickCounter] = useState(0);
 
-    // boolean flag decides when to fetch images.
-    // set to false means that we don't fetch; otherwise, fetch.
-    const [fetchImgs, setFetchImgs] = useState(true);
-
-    function cardClickHandler(){
+    function cardClickHandler(id) {
+        if (clickCounter === imgs.length) {
+            reset();
+            return;
+        }
+        setClickCounter(clickCounter + 1);
         randomizeImages(imgs);
+        const clickedImg = {...imgs.find(img => img.id === id)};
+        if (clickedImg.isClicked) {
+            reset();
+            return;
+        }
+
+        const updatedImgs = imgs.map(img => {
+            if (img.id === id) {
+                return {...img, isClicked: true}
+            }
+            return img;
+        })
+        setScore(score + 1);
+        setUpdateMax(true);
+        randomizeImages(updatedImgs);
     }
+
     function randomizeImages(imgs) {
         const curImgs = [...imgs];
         const randomImgs = [];
@@ -32,42 +53,65 @@ function App() {
 
     function initializeImages(imgRes) {
         const cards = (imgRes.map(img => {
-            return {id: uuidv4(), link: img}
+            return {id: uuidv4(), link: img, isClicked: false}
         }))
         randomizeImages(cards);
     }
-    console.log('yo');
-    // first we use useEffect to fetch data from external API.
-    // then display list of images.
-    // we might need to share image list state.
+
+    function reset() {
+        setClickCounter(0);
+        setScore(0);
+        setUpdateMax(true);
+        const restImgs = (imgs.map(img => {
+            return {...img, isClicked: false};
+        }))
+        randomizeImages(restImgs);
+    }
+
     useEffect(() => {
-        if (fetchImgs) {
-            fetchImages("https://api.pexels.com/v1/search", "animals")
-                .then(imgRes => {
-                    initializeImages(imgRes)
-                })
-            setFetchImgs(false);
-        }
+        fetchImages("https://api.pexels.com/v1/search", "animals")
+            .then(imgRes => {
+                initializeImages(imgRes)
+            })
 
         return () => {
             setImgs([]);
-            setFetchImgs(false);
         }
 
-    }, [fetchImgs]);
+    }, []);
+
+    useEffect(() => {
+        if (updateMax) {
+            setMaxScore(Math.max(score, maxScore));
+            setUpdateMax(false);
+        }
+
+        return () => {
+            setUpdateMax(false);
+        }
+    }, [updateMax])
 
     return (
-        <ul>
-            {imgs.map(img => {
-                return (
-                    <li key={img.id}
-                    onClick={() => cardClickHandler() }
-                    >
-                        <img src={img.link} alt="img"></img>
-                    </li>
-                )
-            })}
-        </ul>
+        <>
+            <h2>
+                Score : {score}
+            </h2>
+            <h2>
+                Max Score: {maxScore}
+            </h2>
+            <ul>
+                {imgs.map(img => {
+                    return (
+                        <Card
+                            id={img.id}
+                            link={img.link}
+                            cardClickHandler={() => cardClickHandler(img.id)}
+                        >
+                        </Card>
+                    )
+                })}
+            </ul>
+        </>
     )
 }
 
